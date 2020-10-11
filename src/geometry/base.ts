@@ -1342,6 +1342,23 @@ export default class Geometry extends Base {
   }
 
   /**
+   * 获取图形绘制的默认绘制数据。
+   * @returns default draw cfg, like: defaultStyle, color...
+   */
+  protected getDefaultDrawCfg(): Partial<ShapeInfo> {
+    const cfg: Partial<ShapeInfo> = {};
+
+    if (this.getShapeFactory()) {
+      const shapeName = this.getShapeFactory().defaultShapeType;
+      const theme = this.theme.geometries[this.shapeType];
+      cfg.defaultStyle = get(theme, [shapeName, 'default'], {}).style;
+      cfg.color = get(cfg.defaultStyle, ['fill']);
+    }
+
+    return cfg;
+  }
+
+  /**
    * 获取每条数据对应的图形绘制数据。
    * @param mappingDatum 映射后的数据
    * @returns draw cfg
@@ -1367,6 +1384,9 @@ export default class Geometry extends Base {
     // 获取默认样式
     const theme = this.theme.geometries[this.shapeType];
     cfg.defaultStyle = get(theme, [shapeName, 'default'], {}).style;
+    if (!cfg.color) {
+      cfg.color = get(cfg.defaultStyle, ['fill']);
+    }
 
     const styleOption = this.styleOption;
     if (styleOption) {
@@ -1377,6 +1397,13 @@ export default class Geometry extends Base {
       cfg.nextPoints = mappingDatum.nextPoints;
     }
 
+    // could not return a newObj
+    const defaultDrawCfg = this.getDefaultDrawCfg();
+    each(defaultDrawCfg, (v, k) => {
+      if (!cfg[k]) {
+        cfg[k] = v;
+      }
+    });
     return cfg;
   }
 
